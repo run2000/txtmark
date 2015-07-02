@@ -98,6 +98,57 @@ class Utils
     }
 
     /**
+     * Determine whether the given character is an ASCII punctuation
+     * character, consequently whether it should be escaped.
+     *
+     * @param c
+     *            The character.
+     * @return true if this is an ASCII punctuation character, otherwise false
+     */
+    public final static boolean isAsciiPunctuation(char c) {
+        switch (c)
+        {
+            case '\\':
+            case '[':
+            case ']':
+            case '(':
+            case ')':
+            case '{':
+            case '}':
+            case '#':
+            case '"':
+            case '\'':
+            case '.':
+            case '>':
+            case '<':
+            case '*':
+            case '+':
+            case '-':
+            case '_':
+            case '!':
+            case '`':
+            case '~':
+            case '^':
+            case '&':
+
+                // completeness
+            case '$':
+            case '%':
+            case ',':
+            case '/':
+            case ':':
+            case ';':
+            case '=':
+            case '?':
+            case '@':
+            case '|':
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
      * Reads characters until any 'end' character is encountered.
      *
      * @param out
@@ -797,6 +848,38 @@ class Utils
             default:
                 out.append(c);
             }
+        }
+    }
+
+    /**
+     * Appends the given character to the given StringBuilder, replacing '&amp;',
+     * '&lt;', '&quot;', and '&gt;' by their respective HTML entities.
+     *
+     * @param out
+     *            The StringBuilder to append to.
+     * @param c
+     *            The character to append.
+     */
+    public final static void characterEncode(StringBuilder out, char c) {
+        switch (c)
+        {
+            case '&':
+                out.append("&amp;");
+                break;
+            case '<':
+                out.append("&lt;");
+                break;
+            case '>':
+                out.append("&gt;");
+                break;
+            case '"':
+                out.append("&quot;");
+                break;
+            case '\'':
+                out.append("&apos;");
+                break;
+            default:
+                out.append(c);
         }
     }
 
