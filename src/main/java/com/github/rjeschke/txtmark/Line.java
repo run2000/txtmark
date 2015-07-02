@@ -114,46 +114,24 @@ class Line
      *            Delimiting character(s)
      * @return The read String or <code>null</code> if no 'end' char was
      *         reached.
+     * @see Utils#readUntil(StringBuilder, String, int, char...)
      */
-    // TODO use Util#readUntil
     public String readUntil(final char... end)
     {
         final StringBuilder sb = new StringBuilder();
         int pos = this.pos;
+        int prev = pos;
         while (pos < this.value.length())
         {
             final char ch = this.value.charAt(pos);
             if (ch == '\\' && pos + 1 < this.value.length())
             {
-                final char c;
-                switch (c = this.value.charAt(pos + 1))
+                if (prev < pos)
                 {
-                case '\\':
-                case '[':
-                case ']':
-                case '(':
-                case ')':
-                case '{':
-                case '}':
-                case '#':
-                case '"':
-                case '\'':
-                case '.':
-                case '>':
-                case '*':
-                case '+':
-                case '-':
-                case '_':
-                case '!':
-                case '`':
-                case '~':
-                    sb.append(c);
-                    pos++;
-                    break;
-                default:
-                    sb.append(ch);
-                    break;
+                    sb.append(this.value, prev, pos);
                 }
+                pos = Utils.escape(sb, this.value.charAt(pos + 1), pos);
+                prev = pos + 1;
             }
             else
             {
@@ -170,9 +148,13 @@ class Line
                 {
                     break;
                 }
-                sb.append(ch);
             }
             pos++;
+        }
+
+        if (prev < pos)
+        {
+            sb.append(this.value, prev, pos);
         }
 
         final char ch = pos < this.value.length() ? this.value.charAt(pos) : '\n';
@@ -532,7 +514,7 @@ class Line
             temp.setLength(0);
             Utils.getXMLTag(temp, element, 0);
             tag = temp.toString();
-            if (!HTML.isHtmlBlockElement(tag.toLowerCase()) && !Utils.isQName(tag))
+            if (!HTML.isHtmlBlockElement(tag) && !Utils.isQName(tag))
             {
                 return false;
             }
@@ -566,7 +548,7 @@ class Line
                         temp.setLength(0);
                         Utils.getXMLTag(temp, element, 0);
                         tag = temp.toString();
-                        if ((HTML.isHtmlBlockElement(tag.toLowerCase()) && !tag.equalsIgnoreCase("hr")) || Utils.isQName(tag))
+                        if ((HTML.isHtmlBlockElement(tag) && !tag.equalsIgnoreCase("hr")) || Utils.isQName(tag))
                         {
                             if (element.charAt(1) == '/')
                             {

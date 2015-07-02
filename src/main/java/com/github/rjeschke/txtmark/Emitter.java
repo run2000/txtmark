@@ -473,56 +473,105 @@ class Emitter
      */
     private static int checkEntity(final StringBuilder out, final String in, final int start)
     {
-        final int pos = Utils.readUntil(out, in, start, ';');
-        if (pos < 0 || out.length() < 3)
+        final int len = in.length();
+        int pos = start + 1;
+        if (pos < 0 || len - start < 3)
         {
             return -1;
         }
-        if (out.charAt(1) == '#')
+        EntityState state = EntityState.INIT;
+        boolean nmtoken = false;
+
+        while(pos < len && state != EntityState.TERMINAL)
         {
-            if (out.charAt(2) == 'x' || out.charAt(2) == 'X')
+            final char c = in.charAt(pos);
+
+            switch(state)
             {
-                if (out.length() < 4)
-                {
-                    return -1;
-                }
-                for (int i = 3; i < out.length(); i++)
-                {
-                    final char c = out.charAt(i);
-                    if ((c < '0' || c > '9') && ((c < 'a' || c > 'f') && (c < 'A' || c > 'F')))
+                case INIT:
+                    if(c == '#')
+                    {
+                        state = EntityState.NUMERIC;
+                    }
+                    else if(Utils.isNameStartChar(c))
+                    {
+                        state = EntityState.CHARACTER;
+                        nmtoken = true;
+                    }
+                    else
                     {
                         return -1;
                     }
-                }
-            }
-            else
-            {
-                for (int i = 2; i < out.length(); i++)
-                {
-                    final char c = out.charAt(i);
-                    if (c < '0' || c > '9')
+                    break;
+                case NUMERIC:
+                    if(c >= '0' && c <= '9')
+                    {
+                        state = EntityState.DECIMAL;
+                    }
+                    else if(c == 'X' || c == 'x')
+                    {
+                        state = EntityState.HEX;
+                    }
+                    else
                     {
                         return -1;
                     }
-                }
+                    break;
+                case HEX:
+                    if (c == ';')
+                    {
+                        if(pos - start < 4)
+                        {
+                            return -1;
+                        }
+                        else
+                        {
+                            state = EntityState.TERMINAL;
+                        }
+                    }
+                    else if ((c < '0' || c > '9') && ((c < 'a' || c > 'f') && (c < 'A' || c > 'F')))
+                    {
+                        return -1;
+                    }
+
+                    break;
+                case DECIMAL:
+                    if (c == ';')
+                    {
+                        state = EntityState.TERMINAL;
+                    }
+                    else if (c < '0' || c > '9')
+                    {
+                        return -1;
+                    }
+                    break;
+                case CHARACTER:
+                    if (c == ';')
+                    {
+                        state = EntityState.TERMINAL;
+                    }
+                    else if(!Utils.isNameChar(c))
+                    {
+                        return -1;
+                    }
+                    break;
+
             }
-            out.append(';');
-        }
-        else
-        {
-            for (int i = 1; i < out.length(); i++)
-            {
-                final char c = out.charAt(i);
-                if (!Character.isLetterOrDigit(c))
-                {
-                    return -1;
-                }
-            }
-            out.append(';');
-            return HTML.isEntity(out.toString()) ? pos : -1;
+
+            pos++;
         }
 
-        return pos;
+        if(state != EntityState.TERMINAL)
+        {
+            return -1;
+        }
+
+        out.append(in, start, pos);
+        if(nmtoken && !HTML.isEntity(out.toString()))
+        {
+            return -1;
+        }
+        return pos - 1;
     }
 
     /**
@@ -871,7 +920,7 @@ class Emitter
                     {
                         return MarkToken.X_REG;
                     }
-                    if (c1 == 'T' & c2 == 'M' & c3 == ')')
+                    if (c1 == 'T' && c2 == 'M' && c3 == ')')
                     {
                         return MarkToken.X_TRADE;
                     }
@@ -1020,25 +1069,7 @@ class Emitter
             {
                 if (!line.isEmpty)
                 {
-                    for (int i = removeIndent ? 4 : 0; i < line.value.length(); i++)
-                    {
-                        final char c;
-                        switch (c = line.value.charAt(i))
-                        {
-                        case '&':
-                            out.append("&amp;");
-                            break;
-                        case '<':
-                            out.append("&lt;");
-                            break;
-                        case '>':
-                            out.append("&gt;");
-                            break;
-                        default:
-                            out.append(c);
-                            break;
-                        }
-                    }
+                    Utils.appendCode(out, line.value, removeIndent ? 4 : 0, line.value.length());
                 }
                 out.append('\n');
                 line = line.next;

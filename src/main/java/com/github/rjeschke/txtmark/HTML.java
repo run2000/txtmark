@@ -200,7 +200,7 @@ class HTML
      */
     public final static boolean isHtmlElement(final String value)
     {
-        return HTML_ELEMENTS.contains(value);
+        return HTML_ELEMENTS.contains(value.toLowerCase());
     }
 
     /**
@@ -211,7 +211,7 @@ class HTML
      */
     public final static boolean isHtmlBlockElement(final String value)
     {
-        return HTML_BLOCK_ELEMENTS.contains(value);
+        return HTML_BLOCK_ELEMENTS.contains(value.toLowerCase());
     }
 
     /**
@@ -222,6 +222,6 @@ class HTML
      */
     public final static boolean isUnsafeHtmlElement(final String value)
     {
-        return HTML_UNSAFE.contains(value);
+        return HTML_UNSAFE.contains(value.toLowerCase());
     }
 }
