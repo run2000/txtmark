@@ -147,6 +147,18 @@ class Line
                 case '!':
                 case '`':
                 case '~':
+                case '^':
+                case '&':
+                case '$':
+                case '%':
+                case ',':
+                case '/':
+                case ':':
+                case ';':
+                case '=':
+                case '?':
+                case '@':
+                case '|':
                     sb.append(c);
                     pos++;
                     break;
