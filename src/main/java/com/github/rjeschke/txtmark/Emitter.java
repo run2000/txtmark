@@ -74,11 +74,24 @@ class Emitter
             break;
         case HEADLINE:
             this.config.decorator.openHeadline(out, root.hlDepth);
-            if (this.useExtensions && root.id != null)
+            if (this.useExtensions)
             {
-                out.append(" id=\"");
-                Utils.appendCode(out, root.id, 0, root.id.length());
-                out.append('"');
+                if (root.id != null)
+                {
+                    out.append(" id=\"");
+                    Utils.appendCode(out, root.id, 0, root.id.length());
+                    out.append('"');
+                }
+                if (root.classes != null)
+                {
+                    out.append(" class=\"");
+                    Utils.appendCode(out, root.classes, 0, root.classes.length());
+                    out.append('"');
+                }
+                if (root.meta.length() > 0)
+                {
+                    out.append(' ').append(root.meta);
+                }
             }
             out.append('>');
             break;
@@ -103,11 +116,24 @@ class Emitter
             break;
         case LIST_ITEM:
             this.config.decorator.openListItem(out);
-            if (this.useExtensions && root.id != null)
+            if (this.useExtensions)
             {
-                out.append(" id=\"");
-                Utils.appendCode(out, root.id, 0, root.id.length());
-                out.append('"');
+                if ((root.id != null))
+                {
+                    out.append(" id=\"");
+                    Utils.appendCode(out, root.id, 0, root.id.length());
+                    out.append('"');
+                }
+                if ((root.classes != null))
+                {
+                    out.append(" class=\"");
+                    Utils.appendCode(out, root.classes, 0, root.classes.length());
+                    out.append('"');
+                }
+                if (root.meta.length() > 0)
+                {
+                    out.append(' ').append(root.meta);
+                }
             }
             out.append('>');
             break;

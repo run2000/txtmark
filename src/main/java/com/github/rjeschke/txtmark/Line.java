@@ -417,94 +417,200 @@ class Line
     }
 
     /**
-     * Checks if this line contains an ID at it's end and removes it from the
-     * line.
-     *
-     * @return The ID or <code>null</code> if no valid ID exists.
+     * Checks if this line contains any special attributes at it's end
+     * and removes it from the line. These are appended to the supplied
+     * Block.
      */
-    // FIXME ... hack
-    public String stripID()
+    public void parseSpecialAttributes(Block block)
     {
         if (this.isEmpty || this.value.charAt(this.value.length() - this.trailing - 1) != '}')
         {
-            return null;
+            return;
         }
+
         int p = this.leading;
         boolean found = false;
         while (p < this.value.length() && !found)
         {
             switch (this.value.charAt(p))
             {
-            case '\\':
-                if (p + 1 < this.value.length())
-                {
-                    switch (this.value.charAt(p + 1))
+                case '\\':
+                    if (p + 1 < this.value.length())
                     {
-                    case '{':
-                        p++;
-                        break;
+                        switch (this.value.charAt(p + 1))
+                        {
+                            case '{':
+                                p++;
+                                break;
+                        }
                     }
-                }
-                p++;
-                break;
-            case '{':
-                found = true;
-                break;
-            default:
-                p++;
-                break;
+                    p++;
+                    break;
+                case '{':
+                    found = true;
+                    break;
+                default:
+                    p++;
+                    break;
             }
         }
 
         if (found)
         {
-            if (p + 1 < this.value.length() && this.value.charAt(p + 1) == '#')
-            {
-                final int start = p + 2;
-                p = start;
+            if (p + 1 < this.value.length()) {
+                // Parse each space separated attribute
+                final int start = p;
+                final int end = this.value.length() - this.trailing - 1;
+                StringBuilder idBuilder = null, classBuilder = null, metaBuilder = null;
+                SpecialAttributeState state = SpecialAttributeState.INIT;
+                p = start + 1;
                 found = false;
-                while (p < this.value.length() && !found)
+
+                while (p < end)
                 {
-                    switch (this.value.charAt(p))
+                    final char c = this.value.charAt(p);
+                    switch (state)
                     {
-                    case '\\':
-                        if (p + 1 < this.value.length())
-                        {
-                            switch (this.value.charAt(p + 1))
-                            {
-                            case '}':
-                                p++;
-                                break;
+                        case INIT:
+                            switch (c) {
+                                case '#':
+                                    state = SpecialAttributeState.ID;
+                                    found = true;
+                                    break;
+                                case '.':
+                                    state = SpecialAttributeState.CLASS;
+                                    found = true;
+                                    if (classBuilder != null)
+                                    {
+                                        classBuilder.append(' ');
+                                    }
+                                    break;
+                                default:
+                                    if (Utils.isNameStartChar(c))
+                                    {
+                                        state = SpecialAttributeState.META_NAME;
+                                        found = true;
+                                        if (metaBuilder == null) {
+                                            metaBuilder = new StringBuilder();
+                                        } else {
+                                            metaBuilder.append(' ');
+                                        }
+                                        metaBuilder.append(c);
+                                    }
+                                    break;
                             }
-                        }
-                        p++;
-                        break;
-                    case '}':
-                        found = true;
-                        break;
-                    default:
-                        p++;
-                        break;
+                            break;
+                        case ID:
+                            if (Utils.isNameChar(c))
+                            {
+                                if (idBuilder == null)
+                                {
+                                    idBuilder = new StringBuilder();
+                                }
+                                idBuilder.append(c);
+                            }
+                            else if(c == ' ')
+                            {
+                                state = SpecialAttributeState.INIT;
+                            }
+                            break;
+                        case CLASS:
+                            if (classBuilder == null)
+                            {
+                                classBuilder = new StringBuilder();
+                            }
+                            if (c == '\\' && p + 1 < this.value.length())
+                            {
+                                p++;
+                                final char c1 = this.value.charAt(p);
+                                if(!Utils.isAsciiPunctuation(c1) && c1 != ' ')
+                                {
+                                    classBuilder.append('\\');
+                                }
+                                classBuilder.append(c1);
+                            }
+                            else if(c == ' ')
+                            {
+                                state = SpecialAttributeState.INIT;
+                            }
+                            else
+                            {
+                                classBuilder.append(c);
+                            }
+                            break;
+                        case META_NAME:
+                            if (Utils.isQNameChar(c))
+                            {
+                                metaBuilder.append(c);
+                            }
+                            else if (c == '=')
+                            {
+                                metaBuilder.append(c);
+                                metaBuilder.append('"');
+                                state = SpecialAttributeState.META_VALUE;
+                            }
+                            else if (c == ' ')
+                            {
+                                state = SpecialAttributeState.INIT;
+                            }
+                            break;
+                        case META_VALUE:
+                            if (c == '\\' && p + 1 < this.value.length())
+                            {
+                                p++;
+                                final char c1 = this.value.charAt(p);
+                                if (!Utils.isAsciiPunctuation(c1) && c1 != ' ')
+                                {
+                                    metaBuilder.append('\\');
+                                }
+                                Utils.characterEncode(metaBuilder, c1);
+                            }
+                            else if (c == ' ')
+                            {
+                                metaBuilder.append('"');
+                                state = SpecialAttributeState.INIT;
+                            }
+                            else
+                            {
+                                Utils.characterEncode(metaBuilder, c);
+                            }
+                            break;
                     }
+                    p++;
                 }
+
+                if (state == SpecialAttributeState.META_VALUE)
+                {
+                    metaBuilder.append('"');
+                }
+
                 if (found)
                 {
-                    final String id = this.value.substring(start, p).trim();
                     if (this.leading != 0)
                     {
                         this.value = this.value.substring(0, this.leading)
-                                + this.value.substring(this.leading, start - 2).trim();
+                                + this.value.substring(this.leading, start).trim();
                     }
                     else
                     {
-                        this.value = this.value.substring(this.leading, start - 2).trim();
+                        this.value = this.value.substring(this.leading, start).trim();
                     }
                     this.trailing = 0;
-                    return id.length() > 0 ? id : null;
+                    if (idBuilder != null)
+                    {
+                        block.id = idBuilder.toString();
+                    }
+                    if (classBuilder != null)
+                    {
+                        block.classes = classBuilder.toString();
+                    }
+                    if (metaBuilder != null)
+                    {
+                        block.meta = metaBuilder.toString();
+                    }
                 }
             }
         }
-        return null;
     }
 
     /**

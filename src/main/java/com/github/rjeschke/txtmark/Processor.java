@@ -800,7 +800,7 @@ public class Processor
             root.removeListIndent(this.config);
             if (this.useExtensions && root.lines != null && root.lines.getLineType(this.config) != LineType.CODE)
             {
-                root.id = root.lines.stripID();
+                root.lines.parseSpecialAttributes(root);
             }
         }
 
@@ -948,7 +948,7 @@ public class Processor
                 }
                 if (this.useExtensions)
                 {
-                    block.id = block.lines.stripID();
+                    block.lines.parseSpecialAttributes(block);
                 }
                 block.transfromHeadline();
                 root.removeLeadingEmptyLines();

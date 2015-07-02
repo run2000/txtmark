@@ -34,6 +34,8 @@ class Block
     public int       hlDepth = 0;
     /** ID for headlines and list items */
     public String    id      = null;
+    /** Classes for headlines and list items */
+    public String    classes = null;
     /** Block meta information */
     public String    meta    = "";
 
