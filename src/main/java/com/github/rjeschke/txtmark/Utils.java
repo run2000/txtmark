@@ -113,12 +113,18 @@ class Utils
     public final static int readUntil(final StringBuilder out, final String in, final int start, final char... end)
     {
         int pos = start;
+        int prev = pos;
         while (pos < in.length())
         {
             final char ch = in.charAt(pos);
             if (ch == '\\' && pos + 1 < in.length())
             {
+                if(prev < pos)
+                {
+                    out.append(in, prev, pos);
+                }
                 pos = escape(out, in.charAt(pos + 1), pos);
+                prev = pos + 1;
             }
             else
             {
@@ -135,12 +141,19 @@ class Utils
                 {
                     break;
                 }
-                out.append(ch);
             }
             pos++;
         }
 
-        return (pos == in.length()) ? -1 : pos;
+        if (pos == in.length())
+        {
+            return -1;
+        }
+        else if (prev < pos)
+        {
+            out.append(in, prev, pos);
+        }
+        return pos;
     }
 
     /**
@@ -159,12 +172,18 @@ class Utils
     public final static int readUntil(final StringBuilder out, final String in, final int start, final char end)
     {
         int pos = start;
+        int prev = pos;
         while (pos < in.length())
         {
             final char ch = in.charAt(pos);
             if (ch == '\\' && pos + 1 < in.length())
             {
+                if(prev < pos)
+                {
+                    out.append(in, prev, pos);
+                }
                 pos = escape(out, in.charAt(pos + 1), pos);
+                prev = pos + 1;
             }
             else
             {
@@ -172,12 +191,19 @@ class Utils
                 {
                     break;
                 }
-                out.append(ch);
             }
             pos++;
         }
 
-        return (pos == in.length()) ? -1 : pos;
+        if (pos == in.length())
+        {
+            return -1;
+        }
+        else if (prev < pos)
+        {
+            out.append(in, prev, pos);
+        }
+        return pos;
     }
 
     /**
@@ -322,10 +348,10 @@ class Utils
             {
                 break;
             }
-            out.append(ch);
             pos++;
         }
 
+        out.append(in, start, pos);
         return (pos == in.length()) ? -1 : pos;
     }
 
@@ -353,10 +379,10 @@ class Utils
             {
                 break;
             }
-            out.append(ch);
             pos++;
         }
 
+        out.append(in, start, pos);
         return (pos == in.length()) ? -1 : pos;
     }
 
@@ -386,11 +412,9 @@ class Utils
             {
                 if (ch == '\\')
                 {
-                    out.append(ch);
                     pos++;
                     if (pos < in.length())
                     {
-                        out.append(ch);
                         pos++;
                     }
                     continue;
@@ -398,7 +422,6 @@ class Utils
                 if (ch == stringChar)
                 {
                     inString = false;
-                    out.append(ch);
                     pos++;
                     continue;
                 }
@@ -427,10 +450,10 @@ class Utils
                     break;
                 }
             }
-            out.append(ch);
             pos++;
         }
 
+        out.append(in, start, pos);
         return (pos == in.length()) ? -1 : pos;
     }
 
@@ -448,24 +471,30 @@ class Utils
      */
     public final static void appendCode(final StringBuilder out, final String in, final int start, final int end)
     {
-        for (int i = start; i < end; i++)
+        int prev = start;
+        int i;
+        for (i = start; i < end; i++)
         {
             final char c;
             switch (c = in.charAt(i))
             {
             case '&':
-                out.append("&amp;");
-                break;
             case '<':
-                out.append("&lt;");
-                break;
             case '>':
-                out.append("&gt;");
+                if(prev < i)
+                {
+                    out.append(in, prev, i);
+                }
+                characterEncode(out, c);
+                prev = i + 1;
                 break;
             default:
-                out.append(c);
                 break;
             }
+        }
+        if(prev < i)
+        {
+            out.append(in, prev, i);
         }
     }
 
@@ -484,30 +513,32 @@ class Utils
      */
     public final static void appendValue(final StringBuilder out, final String in, final int start, final int end)
     {
-        for (int i = start; i < end; i++)
+        int prev = start;
+        int i;
+        for (i = start; i < end; i++)
         {
             final char c;
             switch (c = in.charAt(i))
             {
             case '&':
-                out.append("&amp;");
-                break;
             case '<':
-                out.append("&lt;");
-                break;
             case '>':
-                out.append("&gt;");
-                break;
             case '"':
-                out.append("&quot;");
-                break;
             case '\'':
-                out.append("&apos;");
+                if(prev < i)
+                {
+                    out.append(in, prev, i);
+                }
+                characterEncode(out, c);
+                prev = i + 1;
                 break;
             default:
-                out.append(c);
                 break;
             }
+        }
+        if(prev < i)
+        {
+            out.append(in, prev, i);
         }
     }
 
@@ -717,7 +748,7 @@ class Utils
                     return -1;
                 }
                 final String tag = temp.toString();
-                if (HTML.isUnsafeHtmlElement(tag.toLowerCase()))
+                if (HTML.isUnsafeHtmlElement(tag))
                 {
                     out.append("&lt;");
                 }
@@ -777,14 +808,49 @@ class Utils
      *            The string to append.
      * @param offset
      *            The character offset into value from where to start
+     * @see #appendCode(StringBuilder, String, int, int)
      */
     public final static void codeEncode(final StringBuilder out, final String value, final int offset)
     {
-        for (int i = offset; i < value.length(); i++)
+        int prev = offset;
+        int i;
+        for (i = offset; i < value.length(); i++)
         {
             final char c = value.charAt(i);
             switch (c)
             {
+            case '&':
+            case '<':
+            case '>':
+                if(prev < i)
+                {
+                    out.append(value, prev, i);
+                }
+                characterEncode(out, c);
+                prev = i + 1;
+                break;
+            default:
+                break;
+            }
+        }
+        if(prev < i)
+        {
+            out.append(value, prev, i);
+        }
+    }
+
+    /**
+     * Appends the given character to the given StringBuilder, replacing '&amp;',
+     * '&lt;', '&quot;', and '&gt;' by their respective HTML entities.
+     *
+     * @param out
+     *            The StringBuilder to append to.
+     * @param c
+     *            The character to append.
+     */
+    public final static void characterEncode(StringBuilder out, char c) {
+        switch (c)
+        {
             case '&':
                 out.append("&amp;");
                 break;
@@ -794,9 +860,14 @@ class Utils
             case '>':
                 out.append("&gt;");
                 break;
+            case '"':
+                out.append("&quot;");
+                break;
+            case '\'':
+                out.append("&apos;");
+                break;
             default:
                 out.append(c);
-            }
         }
     }
 
