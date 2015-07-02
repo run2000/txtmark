@@ -722,8 +722,11 @@ class Emitter
                 out.append("&ldquo;");
                 break;
             case ESCAPE:
-                pos++;
-                //$FALL-THROUGH$
+            {
+                char c = in.charAt(++pos);
+                Utils.characterEncode(out, c);
+                break;
+            }
             default:
                 out.append(in.charAt(pos));
                 break;
@@ -825,6 +828,17 @@ class Emitter
             case '`':
             case '~':
             case '^':
+            case '&':
+            case '$':
+            case '%':
+            case ',':
+            case '/':
+            case ':':
+            case ';':
+            case '=':
+            case '?':
+            case '@':
+            case '|':
                 return MarkToken.ESCAPE;
             default:
                 return MarkToken.NONE;

@@ -69,31 +69,43 @@ class Utils
     {
         switch (ch)
         {
-        case '\\':
-        case '[':
-        case ']':
-        case '(':
-        case ')':
-        case '{':
-        case '}':
-        case '#':
-        case '"':
-        case '\'':
-        case '.':
-        case '>':
-        case '<':
-        case '*':
-        case '+':
-        case '-':
-        case '_':
-        case '!':
-        case '`':
-        case '^':
-            out.append(ch);
-            return pos + 1;
-        default:
-            out.append('\\');
-            return pos;
+            case '\\':
+            case '[':
+            case ']':
+            case '(':
+            case ')':
+            case '{':
+            case '}':
+            case '#':
+            case '"':
+            case '\'':
+            case '.':
+            case '>':
+            case '<':
+            case '*':
+            case '+':
+            case '-':
+            case '_':
+            case '!':
+            case '`':
+            case '~':
+            case '^':
+            case '&':
+            case '$':
+            case '%':
+            case ',':
+            case '/':
+            case ':':
+            case ';':
+            case '=':
+            case '?':
+            case '@':
+            case '|':
+                out.append(ch);
+                return pos + 1;
+            default:
+                out.append('\\');
+                return pos;
         }
     }
 
@@ -454,13 +466,9 @@ class Utils
             switch (c = in.charAt(i))
             {
             case '&':
-                out.append("&amp;");
-                break;
             case '<':
-                out.append("&lt;");
-                break;
             case '>':
-                out.append("&gt;");
+                Utils.characterEncode(out, c);
                 break;
             default:
                 out.append(c);
@@ -490,19 +498,11 @@ class Utils
             switch (c = in.charAt(i))
             {
             case '&':
-                out.append("&amp;");
-                break;
             case '<':
-                out.append("&lt;");
-                break;
             case '>':
-                out.append("&gt;");
-                break;
             case '"':
-                out.append("&quot;");
-                break;
             case '\'':
-                out.append("&apos;");
+                characterEncode(out, c);
                 break;
             default:
                 out.append(c);
@@ -795,6 +795,38 @@ class Utils
             default:
                 out.append(c);
             }
+        }
+    }
+
+    /**
+     * Appends the given character to the given StringBuilder, replacing '&amp;',
+     * '&lt;', '&quot;', and '&gt;' by their respective HTML entities.
+     *
+     * @param out
+     *            The StringBuilder to append to.
+     * @param c
+     *            The character to append.
+     */
+    public final static void characterEncode(StringBuilder out, char c) {
+        switch (c)
+        {
+            case '&':
+                out.append("&amp;");
+                break;
+            case '<':
+                out.append("&lt;");
+                break;
+            case '>':
+                out.append("&gt;");
+                break;
+            case '"':
+                out.append("&quot;");
+                break;
+            case '\'':
+                out.append("&apos;");
+                break;
+            default:
+                out.append(c);
         }
     }
 
